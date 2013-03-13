@@ -156,7 +156,7 @@ class DiskQueue(object):
 
     def pushItem(self, item):
         ret = None
-        if self._nbItems == self._maxItems:
+        if self._nbItems >= self._maxItems:
             id = self._findNext(self.firstItemId)
             path = os.path.join(self.path, str(id))
             ret = self.unpickleFn(ReadFile(path))
@@ -166,8 +166,10 @@ class DiskQueue(object):
             self._nbItems += 1
         self.lastItemId += 1
         path = os.path.join(self.path, str(self.lastItemId))
-        if os.path.exists(path):
-            raise IOError('%s already exists.' % path)
+        while os.path.exists(path):
+            self._nbItems += 1
+            self.lastItemId += 1
+            path = os.path.join(self.path, str(self.lastItemId))
         WriteFile(path, self.pickleFn(item))
         return ret
 
